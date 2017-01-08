@@ -76,5 +76,5 @@ ItemPurchaseThink = function()
 end
 
 function BuybackUsageThink()
-	return false;
+	return 0.0;
 end

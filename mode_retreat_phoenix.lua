@@ -24,9 +24,9 @@ function GetDesire()
   if #teammate <= 2 and #enemies >= 3 then
     desire = BOT_ACTION_DESIRE_MODERATE;
   end
-  print ("Phoenix desire run: "..desire);
-  print ("Phoenix active mode: "..Utility.BOT_MODE_STRING(npcBot:GetActiveMode()));
-  print ("Phoenix desire mode: "..npcBot:GetActiveModeDesire());
+  -- print ("Phoenix desire run: "..desire);
+  -- print ("Phoenix active mode: "..Utility.BOT_MODE_STRING(npcBot:GetActiveMode()));
+  -- print ("Phoenix desire mode: "..npcBot:GetActiveModeDesire());
   -- if desire > 0 then
   -- end
 
@@ -51,6 +51,12 @@ function Think()
   local abilitySunRayStop = npcBot:GetAbilityByName( "phoenix_sun_ray_stop" );
   local abilitySupernova = npcBot:GetAbilityByName( "phoenix_supernova" );
 
+  if castSunRayStopDesire > BOT_ACTION_DESIRE_NONE then
+    npcBot:Action_Chat("Stopping SunRay", false);
+    print("Stopping SunRay");
+    npcBot:Action_UseAbility( abilitySunRayStop );
+  end
+
   if willDive > BOT_ACTION_DESIRE_NONE then
     print ("will dive: "..willDive);
     IcarusDiveRetreat(diveLocation);
@@ -66,10 +72,6 @@ function Think()
     npcBot:Action_UseAbility( abilityIcarusDiveStop );
   end
 
-  if castSunRayStopDesire > BOT_ACTION_DESIRE_NONE then
-    npcBot:Action_Chat("Stopping SunRay", false);
-    npcBot:Action_UseAbility( abilitySunRayStop );
-  end
 
   mode_generic_retreat.Think();
 end
@@ -126,6 +128,10 @@ end
 function ConsiderDiveRetreat()
   print ("ConsiderDiveRetreat");
   local npcBot = GetBot();
+  if npcBot:DistanceFromFountain() < 500 then
+    return BOT_ACTION_DESIRE_NONE, 0
+  end
+
   local abilityIcarusDive = npcBot:GetAbilityByName( "phoenix_icarus_dive" );
   if GameTime() < 20 then
     return BOT_ACTION_DESIRE_NONE, 0;
@@ -175,7 +181,6 @@ function ConsiderDiveRetreatStop()
   local abilityIcarusDiveStop = npcBot:GetAbilityByName( "phoenix_icarus_dive_stop" );
   
   if abilityIcarusDiveStop:IsHidden() then 
-    print("abilityIcarusDiveStop:IsHidden()");
     return BOT_ACTION_DESIRE_NONE;
   end
 

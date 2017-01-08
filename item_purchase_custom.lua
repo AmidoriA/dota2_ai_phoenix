@@ -24,6 +24,9 @@ end
 
 function alwaysBuyTP()
 	local npcBot = GetBot();
+	if DotaTime() < 60 then
+		return false;
+	end
 
 	local iScrollCount = 0;
   -- Count current number of TP scrolls (how to count stack?)
@@ -44,10 +47,12 @@ function alwaysBuyTP()
   if ( npcBot:DistanceFromSideShop() == 0 ) then
     npcBot:Action_PurchaseItem( "item_tpscroll" );
     npcBot:Action_PurchaseItem( "item_tpscroll" );
+    return true;
   end
 
-  if ( npcBot:DistanceFromFountain() == 0 and GameTime()>600) then
+  if ( npcBot:DistanceFromFountain() == 0 and DOTATime()>30) then
     npcBot:Action_PurchaseItem( "item_tpscroll" );
+    return true;
   end
 end
 
