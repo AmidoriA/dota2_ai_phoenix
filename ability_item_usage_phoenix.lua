@@ -249,15 +249,22 @@ end
 function SunRayFollowTarget()
   local npcBot = GetBot();
   local idealDistance = 900;
+  local ignoreDistance = 1500;
   print ('Sunray target');
 
   if SunRayUnitTarget == nil then
     return false;
   end
 
-  if not SunRayUnitTarget:CanBeSeen() then
-    SunRayUnitTarget = nil;
-    npcBot:Action_UseAbility(abilitySunRayStop);
+  if not SunRayUnitTarget:CanBeSeen() or npcBot:GetUnitToUnitDistance(SunRayUnitTarget) > ignoreDistance then
+    -- find other target
+    local weakestEnemy, hp = Utility.GetWeakestHero(1000);
+    if weakestEnemy == nil then
+      SunRayUnitTarget = nil;
+      npcBot:Action_UseAbility(abilitySunRayStop);
+    end
+
+    SunRayUnitTarget = weakestEnemy;
   end
 
   targetLocation = SunRayUnitTarget:GetLocation();
