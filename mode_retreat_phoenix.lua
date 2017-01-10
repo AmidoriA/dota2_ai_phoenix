@@ -1,7 +1,5 @@
-require( GetScriptDirectory().."/mode_retreat_generic" )
-Utility = require(GetScriptDirectory().."/Utility")
-
-DiveStartLocation = nil
+require( GetScriptDirectory().."/mode_retreat_generic" );
+Utility = require(GetScriptDirectory().."/Utility");
 
 function OnStart()
   mode_generic_retreat.OnStart();
@@ -22,11 +20,11 @@ function GetDesire()
 
   local desire = mode_generic_retreat.GetDesire();
   if #teammate <= 2 and #enemies >= 3 then
-    desire = BOT_ACTION_DESIRE_MODERATE;
+    desire = desire * 1.5;
   end
-  -- print ("Phoenix desire run: "..desire);
-  -- print ("Phoenix active mode: "..Utility.BOT_MODE_STRING(npcBot:GetActiveMode()));
-  -- print ("Phoenix desire mode: "..npcBot:GetActiveModeDesire());
+  print ("Phoenix desire run: "..desire);
+  print ("Phoenix active mode: "..Utility.BOT_MODE_STRING(npcBot:GetActiveMode()));
+  print ("Phoenix desire mode: "..npcBot:GetActiveModeDesire());
   -- if desire > 0 then
   -- end
 
@@ -59,7 +57,7 @@ function Think()
 
   if willDive > BOT_ACTION_DESIRE_NONE then
     print ("will dive: "..willDive);
-    IcarusDiveRetreat(diveLocation);
+    npcBot:DiveToLocation(diveLocation);
   end
 
   if castSupernovaDesire > BOT_ACTION_DESIRE_NONE then
@@ -67,7 +65,7 @@ function Think()
   end
 
   if willDiveStop > BOT_ACTION_DESIRE_NONE then
-    DiveStartLocation = nil
+    npcBot.DiveStartLocation = nil
     npcBot:Action_Chat("Stopping Dive", false);
     npcBot:Action_UseAbility( abilityIcarusDiveStop );
   end
@@ -167,15 +165,6 @@ function ConsiderDiveRetreat()
   return BOT_ACTION_DESIRE_HIGH, location
 end
 
-function IcarusDiveRetreat(target)
-  print ("Diving!!");
-  local npcBot = GetBot();
-  local abilityIcarusDive = npcBot:GetAbilityByName( "phoenix_icarus_dive" );
-  DiveStartLocation = npcBot:GetLocation();
-  npcBot:Action_UseAbilityOnLocation( abilityIcarusDive, target );
-  return true
-end
-
 function ConsiderDiveRetreatStop()
   local npcBot = GetBot();
   local abilityIcarusDiveStop = npcBot:GetAbilityByName( "phoenix_icarus_dive_stop" );
@@ -196,12 +185,12 @@ function ConsiderDiveRetreatStop()
   --   return BOT_ACTION_DESIRE_NONE;
   -- end
 
-  if DiveStartLocation == nil then
+  if npcBot.DiveStartLocation == nil then
     npcBot:Action_Chat("DiveStartLocation == nil. BUG!!", false);
     return BOT_ACTION_DESIRE_NONE;
   end
 
-  local distance = Utility.GetDistance(npcBot:GetLocation(), DiveStartLocation);
+  local distance = Utility.GetDistance(npcBot:GetLocation(), npcBot.DiveStartLocation);
   print("Distance: "..distance);
   if distance > 1000 then
     return BOT_ACTION_DESIRE_ABSOLUTE;

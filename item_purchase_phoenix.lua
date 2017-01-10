@@ -46,7 +46,7 @@ npcBot.AbilityPriority = {
 npcBot.ItemsToBuy = {
 "item_tango",
 "item_flask",
-"item_ward_observer",
+-- "item_ward_observer",
 "item_clarity",
 "item_boots",
 "item_magic_stick",
@@ -65,8 +65,8 @@ npcBot.ItemsToBuy = {
 "item_recipe_radiance"
 };
 
-LevelUp = function(AbilityPriority)
-	item_purchase_custom.LevelUp(AbilityPriority);
+LevelUp = function()
+	item_purchase_custom.LevelUp();
 end
 
 ItemPurchaseThink = function()

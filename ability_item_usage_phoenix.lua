@@ -6,6 +6,9 @@ SunRayUnitTarget = nil
 function AbilityUsageThink()
   local npcBot = GetBot();
 
+  if npcBot.initAttr == false or npcBot.initAttr == nil then
+    initAttr();
+  end
 
   -- min = math.floor(DotaTime() / 60)
   -- sec = DotaTime() % 60
@@ -19,6 +22,8 @@ function AbilityUsageThink()
   -- npcBot:Action_Chat(debug_msg, false)
 
   -- Check if we're already using an ability
+
+  -- print(npcBot.alias);
 
   abilitySunRay = npcBot:GetAbilityByName( "phoenix_sun_ray" );
   abilitySunRayStop = npcBot:GetAbilityByName( "phoenix_sun_ray_stop" );
@@ -36,12 +41,8 @@ function AbilityUsageThink()
 
   -- Consider using each ability
   castSunRayDesire, castSunRayTarget, SunRayUnitTarget = ConsiderSunRay();
-  -- castDiveRetreatDesire, castDiveRetreatTarget = ConsiderDiveRetreat();
-  -- castDiveRetreatDesire = 0;
   castSupernovaDesire = ConsiderSupernova();
-  -- castSunRayStopDesire = ConsiderSunRayStop();
-  -- castDiveRetreatStopDesire = ConsiderDiveRetreatStop();
-  -- castDiveRetreatStopDesire = 0;
+  castDiveChasingDesire, chasingLocation = ConsiderChasing();
   comboDesire, comboLocation = ConsiderCombo();
   castFireSpiritsDesire = ConsiderFireSpirits();
   castLaunchFireSpiritsDesire, fireSpiritLocations = ConsiderLaunchFireSpirits();
@@ -77,11 +78,15 @@ function AbilityUsageThink()
   --   desiredSkill = "phoenix_sun_ray_stop";
   -- end
 
+  if ( castDiveChasingDesire > highestDesire) then
+    highestDesire = castDiveChasingDesire;
+    desiredSkill = "phoenix_dive_chasing";
+  end
+
   if ( castLaunchFireSpiritsDesire > highestDesire) then
     highestDesire = castLaunchFireSpiritsDesire;
     desiredSkill = "phoenix_launch_fire_spirit";
   end
-
 
   if ( castSunRayDesire > highestDesire) then
     highestDesire = castSunRayDesire;
@@ -99,16 +104,14 @@ function AbilityUsageThink()
   end
 
   if highestDesire == 0 then return;
+  elseif desiredSkill == "phoenix_dive_chasing" then 
+    npcBot:DiveToLocation(chasingLocation);
+    npcBot:Action_Chat("Dive chasing someone");
   elseif desiredSkill == "phoenix_sun_ray" then 
     npcBot:Action_UseAbilityOnLocation( abilitySunRay, castSunRayTarget );
-  elseif desiredSkill == "phoenix_icarus_dive_retreat" then 
-    IcarusDiveRetreat( castDiveRetreatTarget );
+    npcBot:SetTarget(SunRayUnitTarget);
   elseif desiredSkill == "phoenix_supernova" then
     npcBot:Action_UseAbility( abilitySupernova );
-  elseif desiredSkill == "phoenix_icarus_dive_retreat_stop" then
-    DiveRetreating = false
-    DiveStartLocation = nil
-    npcBot:Action_UseAbility( abilityIcarusDiveStop );
   elseif desiredSkill == "phoenix_fire_spirits" then
     npcBot:Action_UseAbility( abilityFireSpirits );
   elseif desiredSkill == "phoenix_sun_ray_stop" then
@@ -167,51 +170,6 @@ function ConsiderSupernova()
   return BOT_ACTION_DESIRE_NONE;
 end
 
-
-
-function ConsiderDiveRetreat()
-  if GameTime() < 20 then
-    return BOT_ACTION_DESIRE_NONE, 0;
-  end
-
-  local npcBot = GetBot();
-  if not abilityIcarusDive:IsFullyCastable() then 
-    return BOT_ACTION_DESIRE_NONE, 0;
-  end
-
-  local mode = npcBot:GetActiveMode()
-  local modeDesire = npcBot:GetActiveModeDesire()
-
-  if mode ~= BOT_MODE_RETREAT then
-    return BOT_ACTION_DESIRE_NONE, 0;
-  end
-
-  -- Not dive if not recently damaged or have health more than 50%
-  if not npcBot:WasRecentlyDamagedByAnyHero(200) or (npcBot:GetHealth() * 100 / npcBot:GetMaxHealth() < 50) then
-    return BOT_ACTION_DESIRE_NONE, 0;
-  end
-
-
-  local location = Vector(0, 0)
-  if GetTeam() == TEAM_RADIANT then
-    location = Utility.Locations["RadiantBase"]
-  else
-    location = Utility.Locations["DireBase"]
-  end
-
-  npcBot:Action_Chat("ConsiderDiveRetreat: "..Utility.BOT_MODE_STRING(mode), false);
-  npcBot:Action_Chat("Desire: "..modeDesire, false);
-  return BOT_ACTION_DESIRE_HIGH, location
-end
-
-function IcarusDiveRetreat(target)
-  local npcBot = GetBot();
-  DiveStartLocation = npcBot:GetLocation();
-  DiveRetreating = true
-  npcBot:Action_UseAbilityOnLocation( abilityIcarusDive, target );
-  return true
-end
-
 function ConsiderCombo()
   local npcBot = GetBot();
   if not IsComboReady() then
@@ -241,7 +199,7 @@ end
 
 function UseCombo(target)
   local npcBot = GetBot();
-  npcBot:Action_UseAbilityOnLocation( abilityIcarusDive, target );
+  npcBot:DiveToLocation(target);
 end
 
 function ConsiderFireSpirits()
@@ -285,20 +243,35 @@ function ConsiderLaunchFireSpirits()
   --   -- if not v:HasModifier("modifier_phoenix_fire_spirit_burn") then
   --   -- end
   end
-  return BOT_ACTION_DESIRE_HIGH, locations;
+  return BOT_ACTION_DESIRE_MODERATE, locations;
 end
 
 function SunRayFollowTarget()
   local npcBot = GetBot();
   local idealDistance = 900;
   print ('Sunray target');
+
+  if SunRayUnitTarget == nil then
+    return false;
+  end
+
+  if not SunRayUnitTarget:CanBeSeen() then
+    SunRayUnitTarget = nil;
+    npcBot:Action_UseAbility(abilitySunRayStop);
+  end
+
   targetLocation = SunRayUnitTarget:GetLocation();
   npcBot:Action_MoveToLocation(targetLocation);
   local abilitySunRayToggleMove = npcBot:GetAbilityByName( "phoenix_sun_ray_toggle_move" );
 
-  if not abilitySunRayToggleMove:IsActivated() then
-    npcBot:Action_UseAbility(abilitySunRayToggleMove);
+  if GetUnitToLocationDistance(npcBot, targetLocation) <= idealDistance then
+    if abilitySunRayToggleMove:IsActivated() then
+       npcBot:Action_UseAbility(abilitySunRayToggleMove);
+     end
+    return false;
   end
+
+  npcBot:Action_UseAbility(abilitySunRayToggleMove);
 
   -- if GetUnitToLocationDistance(npcBot, targetLocation) > idealDistance then
   --   if not abilitySunRayToggleMove:IsActivated() then
@@ -311,4 +284,47 @@ function SunRayFollowTarget()
   -- end
 
   return true;
+end
+
+function ConsiderChasing()
+  local npcBot = GetBot();
+  local idealDistance = 1200;
+  local notCareDistance = 3000;
+
+  if not abilityIcarusDive:IsFullyCastable() then
+    return BOT_ACTION_DESIRE_NONE;
+  end
+
+  if abilitySunRay:IsActivated() then 
+    return BOT_ACTION_DESIRE_NONE;
+  end
+
+  local target = npcBot:GetTarget();
+  if target == nil then
+    print ("target == nil");
+    return BOT_ACTION_DESIRE_NONE;
+  end
+
+  if npcBot:GetUnitToUnitDistance(target) > notCareDistance then
+    return BOT_ACTION_DESIRE_NONE;
+  end
+
+  if npcBot:GetUnitToUnitDistance(target) < idealDistance then
+    return BOT_ACTION_DESIRE_NONE;
+  end
+
+  return BOT_ACTION_DESIRE_MODERATE, target:GetLocation();
+end
+
+function initAttr() 
+  local npcBot = GetBot();
+  local HeroSettings = require( GetScriptDirectory().."/Hero/phoenix");
+  for k,v in pairs(HeroSettings) do
+    npcBot[k] = v;
+  end
+  npcBot.initAttr = true;
+end
+
+function ItemUsageThink()
+  Utility.UseItems();
 end

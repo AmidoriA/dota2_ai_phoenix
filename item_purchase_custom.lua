@@ -6,6 +6,7 @@ module( "item_purchase_custom", package.seeall )
 LevelUp = function()
   local npcBot = GetBot();
 	if #npcBot.AbilityPriority==0 then
+    print ('no ability to upgrade');
 		return;
 	end
 	
@@ -15,6 +16,10 @@ LevelUp = function()
 
 	local ability=npcBot:GetAbilityByName(npcBot.AbilityPriority[1]);
 
+  if(ability == nil) then
+    print ('wrong ability name');
+  end
+
 	if (ability~=nil and ability:CanAbilityBeUpgraded() and ability:GetLevel()<ability:GetMaxLevel()) then
 		npcBot:Action_LevelAbility(npcBot.AbilityPriority[1]);
 		table.remove( npcBot.AbilityPriority, 1 );
@@ -23,13 +28,18 @@ end
 
 function alwaysBuyTP()
 	local npcBot = GetBot();
+
+  if not IsCourierAvailable() then
+    return false; -- prevent error when courier carrying TP. We cannot count tp in courier
+  end
+
 	if DotaTime() < 60 then
 		return false;
 	end
 
 	local iScrollCount = 0;
   -- Count current number of TP scrolls (how to count stack?)
-  for i=0,8 
+  for i=0, 15 
   do
     local sCurItem = npcBot:GetItemInSlot ( i );
     if ( sCurItem ~= nil and sCurItem:GetName() == "item_tpscroll")
@@ -49,7 +59,7 @@ function alwaysBuyTP()
     return true;
   end
 
-  if ( npcBot:DistanceFromFountain() == 0 and DOTATime()>30) then
+  if ( npcBot:DistanceFromFountain() == 0 and DotaTime()>30) then
     npcBot:Action_PurchaseItem( "item_tpscroll" );
     return true;
   end

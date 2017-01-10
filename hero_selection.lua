@@ -34,7 +34,8 @@ function Think()
 
 	local IDs=GetTeamPlayers(Team);
 	for i,id in pairs(IDs) do
-		if IsPlayerBot(id) and (id == 1) then
+		print (id);
+		if IsPlayerBot(id) and (id == 2) then
 			SelectHero(id, "npc_dota_hero_phoenix");
 			table.insert(SelectedHeroes, "npc_dota_hero_phoenix")
 		elseif IsPlayerBot(id) then

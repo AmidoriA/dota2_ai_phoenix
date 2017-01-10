@@ -26,13 +26,8 @@ function GetDesire()
 	if npcBot.IsGoingToShop==nil then
 		npcBot.IsGoingToShop=false;
 	end
-	
-	-- if npcBot.IsGoingToShop then
-	-- 	return 0.23;
-	-- end
 
 	if npcBot.ItemsToBuy==nil then
-		print('npcBot.ItemsToBuy==nil');
 		return 0.0;
 	end
 	
@@ -40,42 +35,19 @@ function GetDesire()
 	local NextItem=npcBot.ItemsToBuy[1];
 	
 	if not IsItemPurchasedFromSecretShop(NextItem) then
-		print('not IsItemPurchasedFromSecretShop(NextItem)');
 		return 0.0;
 	end
 
 	if npcBot:GetGold() < GetItemCost( NextItem ) then
-		print('npcBot:GetGold() < GetItemCost( NextItem )');
 		return 0.0;
 	end
 
 	local secLoc=Utility.GetSecretShop();
-	-- if IsItemPurchasedFromSideShop(NextItem) and npcBot:DistanceFromSideShop()<4000 and GetUnitToLocationDistance(npcBot,secLoc)>npcBot:DistanceFromSideShop() then
-	-- 	npcBot.IsGoingToShop=false;
-	-- 	return 0.0;
-	-- end
-	
-	-- if IsItemPurchasedFromSecretShop(NextItem) then
-	-- 	if npcBot:GetGold() >= GetItemCost( NextItem ) and (npcBot.SecretGold==nil or npcBot.SecretGold<npcBot:GetGold()) and GetUnitToLocationDistance(npcBot,Utility.Fountain(Utility.GetOtherTeam()))>5000 then
-	-- 		Utility.InitPath();
-	-- 		npcBot.IsGoingToShop=true;
-	-- 		return 0.23;
-	-- 	end
-	-- end
-
-
-	-- We are going to shop
-
-	-- if IsItemPurchasedFromSecretShop(NextItem) then
-	-- 	if npcBot:GetGold() < GetItemCost( NextItem ) then
-	-- 	end
-	-- end
 
 	local desire = 0.0;
 
 	local desireDistance = 0.1;
 	local distance = GetUnitToLocationDistance(npcBot, secLoc);
-	-- local desireDistanceFactor = (-0.0013 * distance) + 9.1454; -- desire is higher when near the secret shop
 	local desireDistanceFactor = (-3.974 * math.log(distance)) + 38.963; -- desire is higher when near the secret shop
 
 	desireDistance = desireDistance * desireDistanceFactor;

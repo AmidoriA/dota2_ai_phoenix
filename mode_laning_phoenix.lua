@@ -44,6 +44,8 @@ end
 function GetDesire()
 	local npcBot = GetBot();
 
+	-- print (npcBot.testAttr);
+
 	local abilitySunRay = npcBot:GetAbilityByName( "phoenix_sun_ray" );
 	local abilitySunRayStop = npcBot:GetAbilityByName( "phoenix_sun_ray_stop" );
 
