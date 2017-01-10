@@ -3,14 +3,16 @@ module( "item_purchase_custom", package.seeall )
 
 -- Utility = require(GetScriptDirectory().."/Utility")
 
-LevelUp = function()
+_LevelUp = function()
   local npcBot = GetBot();
+  -- print('_LevelUp');
 	if #npcBot.AbilityPriority==0 then
-    print ('no ability to upgrade');
+    print(#npcBot.AbilityPriority==0);
 		return;
 	end
 	
-	if GameTime()<10 then
+  -- Prevent bot try to level up ability before pick screen end
+	if DotaTime() < 0 then
 		return;
 	end
 
@@ -24,6 +26,20 @@ LevelUp = function()
 		npcBot:Action_LevelAbility(npcBot.AbilityPriority[1]);
 		table.remove( npcBot.AbilityPriority, 1 );
 	end
+
+  -- if not ability:CanAbilityBeUpgraded() then
+  --   print('ability:CanAbilityBeUpgraded()');
+  --   print(ability:GetName());
+  --   print(npcBot:GetUnitName());
+  -- end
+
+  -- if not (ability:GetLevel()<ability:GetMaxLevel()) then
+  --   print('ability:GetLevel(): '..ability:GetLevel());
+  --   print('ability:GetMaxLevel(): '..ability:GetMaxLevel());
+  --   print('ability:GetLevel()<ability:GetMaxLevel()');
+  -- end
+
+  -- print ('other');
 end
 
 function alwaysBuyTP()
@@ -48,9 +64,11 @@ function alwaysBuyTP()
     end
   end
 
+  print ('Current TP = '..iScrollCount);
   if iScrollCount > 1 then
-  	return false;
+    return false;
   end
+
 
   -- If we are at the sideshop with no TPs, then buy two
   if ( npcBot:DistanceFromSideShop() == 0 ) then
@@ -60,6 +78,7 @@ function alwaysBuyTP()
   end
 
   if ( npcBot:DistanceFromFountain() == 0 and DotaTime()>30) then
+    print ('Current TP = '..iScrollCount);
     npcBot:Action_PurchaseItem( "item_tpscroll" );
     return true;
   end
@@ -68,8 +87,19 @@ end
 function ItemPurchaseThink(LevelUp)
 	local npcBot = GetBot();
 
+  if DotaTime() < -90 then
+    return false;
+  end
+
+  if ( npcBot:DistanceFromFountain() == 0 and DotaTime() > 400) then
+    Utility.DropJunks();
+  end
+
 	alwaysBuyTP();
 
+  -- if Utility.GetHeroLevel() == 1 then
+  --   print (npcBot:GetAbilityPoints());
+  -- end
 	----
 	if npcBot:GetAbilityPoints()>0 then
 		LevelUp(npcBot.AbilityPriority);
@@ -90,6 +120,10 @@ function ItemPurchaseThink(LevelUp)
 			table.remove( npcBot.ItemsToBuy, 1 );
 		end
 	end
+
+  if #npcBot.ItemsToBuy > 0 then
+    npcBot:SetNextItemPurchaseValue( GetItemCost( npcBot.ItemsToBuy[1] ) );
+  end
 end
 
 for k,v in pairs( item_purchase_custom ) do	_G._savedEnv[k] = v end

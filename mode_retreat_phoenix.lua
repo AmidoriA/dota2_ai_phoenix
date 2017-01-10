@@ -22,9 +22,9 @@ function GetDesire()
   if #teammate <= 2 and #enemies >= 3 then
     desire = desire * 1.5;
   end
-  print ("Phoenix desire run: "..desire);
-  print ("Phoenix active mode: "..Utility.BOT_MODE_STRING(npcBot:GetActiveMode()));
-  print ("Phoenix desire mode: "..npcBot:GetActiveModeDesire());
+  -- print ("Phoenix desire run: "..desire);
+  -- print ("Phoenix active mode: "..Utility.BOT_MODE_STRING(npcBot:GetActiveMode()));
+  -- print ("Phoenix desire mode: "..npcBot:GetActiveModeDesire());
   -- if desire > 0 then
   -- end
 

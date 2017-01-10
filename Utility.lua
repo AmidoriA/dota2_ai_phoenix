@@ -330,12 +330,6 @@ end
 
 function Utility.DropJunks()
   local npcBot=GetBot();
-  
-  item=Utility.IsItemAvailable("item_tpscroll");
-  if item~=nil and (not item:IsFullyCastable()) then
-    npcBot:Action_SellItem(item);
-    return;
-  end
 
   if Utility.NumberOfItems()<=5 or npcBot:IsChanneling() then
     return;
@@ -354,12 +348,6 @@ function Utility.DropJunks()
   end
   
   item=Utility.IsItemAvailable("item_poor_mans_shield");
-  if item~=nil then
-    npcBot:Action_SellItem(item);
-    return;
-  end
-  
-  item=Utility.IsItemAvailable("item_tpscroll");
   if item~=nil then
     npcBot:Action_SellItem(item);
     return;
@@ -1096,9 +1084,21 @@ function Utility.UseItems()
     local dest=GetLocationAlongLane(npcBot.CurLane,0.5);
     if tp:IsFullyCastable() and npcBot:GetActiveMode()==BOT_MODE_LANING and GetUnitToLocationDistance(npcBot,Utility.Fountain(GetTeam()))<2000 then
       npcBot:Action_UseAbilityOnLocation(tp,dest);
-    elseif not (npcBot:IsUsingAbility() or npcBot:IsChanneling()) then
-      npcBot:Action_SellItem(tp);
     end
+  end
+
+  local tango=Utility.IsItemAvailable("item_tango");
+    if tango == nil then
+      tango = Utility.IsItemAvailable("item_tango_single");
+    end
+    if npcBot:HasModifier('modifier_tango_heal') then tango=nil; end
+    if tango~=nil then
+      if npcBot:GetHealth() * 100.0 / npcBot:GetMaxHealth() < 70 then
+        trees = npcBot:GetNearbyTrees(500);
+        if #trees ~= 0 then
+          npcBot:Action_UseAbilityOnTree(tango, trees[0]);
+        end
+      end
   end
   
   local hod=Utility.IsItemAvailable("item_helm_of_the_dominator");

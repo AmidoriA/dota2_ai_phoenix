@@ -10,21 +10,6 @@ function AbilityUsageThink()
     initAttr();
   end
 
-  -- min = math.floor(DotaTime() / 60)
-  -- sec = DotaTime() % 60
-  -- local debug_msg = ""
-  -- debug_msg = "Mode: "..Utility.BOT_MODE_STRING(npcBot:GetActiveMode());
-  -- print(debug_msg)
-  -- npcBot:Action_Chat(debug_msg, false)
-
-  -- debug_msg = "Desire: "..npcBot:GetActiveModeDesire();
-  -- print(debug_msg)
-  -- npcBot:Action_Chat(debug_msg, false)
-
-  -- Check if we're already using an ability
-
-  -- print(npcBot.alias);
-
   abilitySunRay = npcBot:GetAbilityByName( "phoenix_sun_ray" );
   abilitySunRayStop = npcBot:GetAbilityByName( "phoenix_sun_ray_stop" );
   abilitySupernova = npcBot:GetAbilityByName( "phoenix_supernova" );
@@ -54,6 +39,8 @@ function AbilityUsageThink()
       npcBot:Action_Chat("Launch!!!", true);
     end
   end
+
+  -- print("Sunray Desire: "..castSunRayDesire);
 
   local highestDesire = 0;
   local desiredSkill = "";
@@ -103,7 +90,7 @@ function AbilityUsageThink()
     desiredSkill = "phoenix_fire_spirits";
   end
 
-  if highestDesire == 0 then return;
+  if highestDesire < 0.5 then return;
   elseif desiredSkill == "phoenix_dive_chasing" then 
     npcBot:DiveToLocation(chasingLocation);
     npcBot:Action_Chat("Dive chasing someone");
@@ -126,29 +113,46 @@ function ConsiderSunRay()
   local npcBot = GetBot();
 
   -- Make sure it's castable
-  if not abilitySunRay:IsFullyCastable() 
-  then 
+  if not abilitySunRay:IsFullyCastable() then 
     return BOT_ACTION_DESIRE_NONE, 0;
   end
 
-  -- if abilitySunRay:GetLevel() < 2 then
-  --   return BOT_ACTION_DESIRE_NONE, 0;
-  -- end
-
-  -- Get some of its values
-  local nCastRange = 1300;
+  local castRange = abilitySunRay:GetSpecialValueInt('beam_range');
 
   -- Find vulnerable enemy 
-  local WeakestEnemy = nil
-  local WeakestHealth = 10000
+  local WeakestEnemy = nil;
+  local WeakestHealth = 10000;
 
-  WeakestEnemy, WeakestHealth = Utility.GetWeakestHero(nCastRange)
+  WeakestEnemy, WeakestHealth = Utility.GetWeakestHero(castRange)
 
   if WeakestEnemy == nil then
     return BOT_ACTION_DESIRE_NONE, 0;
   end
 
-  return BOT_ACTION_DESIRE_MODERATE, WeakestEnemy:GetLocation(), WeakestEnemy;
+  local castWidth = abilitySunRay:GetSpecialValueInt('radius');
+  local nearByEnemies = npcBot:GetNearbyHeroes(castWidth, true, BOT_MODE_NONE);
+  local abilityLevel = abilitySunRay:GetLevel();
+  local hpPercentage = WeakestHealth * 100.0 / WeakestEnemy:GetMaxHealth();
+  local desire = 0.25;
+
+
+
+  desire = desire *  (1 + ((#nearByEnemies - 1) * 0.25)); -- *1.25 per nearby
+
+  if WeakestEnemy:IsHexed() or WeakestEnemy:IsRooted() or WeakestEnemy:IsStunned() then
+    desire = desire + 0.25;
+  end
+
+  -- HP Desire
+  desire = desire + ((-0.206* math.log(hpPercentage)) + 1.025); -- + 0.25++ when hp less than 50%
+
+  -- Ability level desire
+  desire = desire * (0.3536 * math.exp( 0.3807 * abilityLevel)); -- * 1.25 when level 3, * 1.5 when levek 4
+
+  if GetUnitToUnitDistance(npcBot, WeakestEnemy) > castRange - 100 then
+    desire = desire * 0.50;
+  end
+  return desire, WeakestEnemy:GetLocation(), WeakestEnemy;
 end
 
 function ConsiderSupernova()
@@ -199,6 +203,12 @@ end
 
 function UseCombo(target)
   local npcBot = GetBot();
+
+  local shiva=Utility.IsItemAvailable("item_shivas_guard");
+    if shiva~=nil and shiva:IsFullyCastable() and ((Enemies~=nil and #Enemies>2) or npcBot:GetActiveMode()==BOT_MODE_ATTACK or npcBot:GetHealth()/npcBot:GetMaxHealth()<0.4) then
+    npcBot:Action_UseAbility(shiva);
+  end
+
   npcBot:DiveToLocation(target);
 end
 
@@ -332,6 +342,6 @@ function initAttr()
   npcBot.initAttr = true;
 end
 
-function ItemUsageThink()
-  Utility.UseItems();
-end
+-- function ItemUsageThink()
+--   Utility.UseItems();
+-- end

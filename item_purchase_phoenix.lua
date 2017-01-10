@@ -66,7 +66,7 @@ npcBot.ItemsToBuy = {
 };
 
 LevelUp = function()
-	item_purchase_custom.LevelUp();
+	item_purchase_custom._LevelUp();
 end
 
 ItemPurchaseThink = function()
