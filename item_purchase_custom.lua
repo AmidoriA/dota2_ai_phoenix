@@ -3,8 +3,9 @@ module( "item_purchase_custom", package.seeall )
 
 -- Utility = require(GetScriptDirectory().."/Utility")
 
-_LevelUp = function(AbilityPriority)
-	if #AbilityPriority==0 then
+LevelUp = function()
+  local npcBot = GetBot();
+	if #npcBot.AbilityPriority==0 then
 		return;
 	end
 	
@@ -12,13 +13,11 @@ _LevelUp = function(AbilityPriority)
 		return;
 	end
 
-  local npcBot = GetBot();
-	
-	local ability=npcBot:GetAbilityByName(AbilityPriority[1]);
+	local ability=npcBot:GetAbilityByName(npcBot.AbilityPriority[1]);
 
 	if (ability~=nil and ability:CanAbilityBeUpgraded() and ability:GetLevel()<ability:GetMaxLevel()) then
-		npcBot:Action_LevelAbility(AbilityPriority[1]);
-		table.remove( AbilityPriority, 1 );
+		npcBot:Action_LevelAbility(npcBot.AbilityPriority[1]);
+		table.remove( npcBot.AbilityPriority, 1 );
 	end
 end
 
@@ -56,34 +55,29 @@ function alwaysBuyTP()
   end
 end
 
-function ItemPurchaseThink(AbilityPriority, ItemsToBuy, LevelUp)
+function ItemPurchaseThink(LevelUp)
 	local npcBot = GetBot();
 
 	alwaysBuyTP();
 
 	----
 	if npcBot:GetAbilityPoints()>0 then
-		LevelUp(AbilityPriority);
+		LevelUp(npcBot.AbilityPriority);
 	end
-
-	-- local item=Utility.IsItemAvailable("item_silver_edge");
-	-- if item~=nil then
-	-- 	npcBot.SecretGold=5300;
-	-- end
 	
-	if ( ItemsToBuy==nil or #ItemsToBuy == 0 ) then
+	if ( npcBot.ItemsToBuy==nil or #npcBot.ItemsToBuy == 0 ) then
 		npcBot:SetNextItemPurchaseValue( 0 );
 		return;
 	end
 
-	local NextItem = ItemsToBuy[1];
+	local NextItem = npcBot.ItemsToBuy[1];
 
 	npcBot:SetNextItemPurchaseValue( GetItemCost( NextItem ) );
 
 	if (not IsItemPurchasedFromSecretShop( NextItem)) and (not(IsItemPurchasedFromSideShop(NextItem) and npcBot:DistanceFromSideShop()<=2200)) then
 		if ( npcBot:GetGold() >= GetItemCost( NextItem ) ) then
 			npcBot:Action_PurchaseItem( NextItem );
-			table.remove( ItemsToBuy, 1 );
+			table.remove( npcBot.ItemsToBuy, 1 );
 		end
 	end
 end

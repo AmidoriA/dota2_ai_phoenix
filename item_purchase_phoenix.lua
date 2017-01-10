@@ -17,7 +17,9 @@ Utility = require(GetScriptDirectory().."/Utility")
 -- 	"phoenix_supernova"
 -- }
 
-AbilityPriority = {
+local npcBot = GetBot();
+
+npcBot.AbilityPriority = {
 	"phoenix_icarus_dive",
 	"phoenix_sun_ray",
 	"phoenix_sun_ray",
@@ -41,9 +43,9 @@ AbilityPriority = {
 	"special_bonus_unique_phoenix_1"-- 25
 };
 
-local ItemsToBuy = {
+npcBot.ItemsToBuy = {
 "item_tango",
-"item_salve",
+"item_flask",
 "item_ward_observer",
 "item_clarity",
 "item_boots",
@@ -64,13 +66,11 @@ local ItemsToBuy = {
 };
 
 LevelUp = function(AbilityPriority)
-	item_purchase_custom._LevelUp(AbilityPriority);
+	item_purchase_custom.LevelUp(AbilityPriority);
 end
 
 ItemPurchaseThink = function()
 	item_purchase_custom.ItemPurchaseThink (
-		AbilityPriority,
-		ItemsToBuy,
 		LevelUp
 	);
 end
